@@ -1,1 +1,41 @@
-<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Empty Project</title><meta itemprop="name" content="Empty Project"><meta name="twitter:title" content="Empty Project"><meta property="og:title" content="Empty Project"><meta property="og:site_name" content="Empty Project"><meta name="description" content="Start with a blank project."><meta itemprop="description" content="Start with a blank project."><meta property="og:description" content="Start with a blank project."><meta name="twitter:description" content="Start with a blank project."><script crossorigin="anonymous" src="./external/runtime/runtime.js"></script><script crossorigin="anonymous" src="./external/xr/xr.js" async="true" data-preload-chunks="face, slam"></script></head><body><script src="bundle.js"></script></body></html>
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Empty Project</title>
+    <meta itemprop="name" content="Empty Project">
+    <meta name="twitter:title" content="Empty Project">
+    <meta property="og:title" content="Empty Project">
+    <meta property="og:site_name" content="Empty Project">
+    <meta name="description" content="Start with a blank project.">
+    <meta itemprop="description" content="Start with a blank project.">
+    <meta property="og:description" content="Start with a blank project.">
+    <meta name="twitter:description" content="Start with a blank project.">
+    <script crossorigin="anonymous" src="./external/runtime/runtime.js"></script>
+    <script crossorigin="anonymous" src="./external/xr/xr.js" async="true" data-preload-chunks="face, slam"></script>
+</head>
+
+<body>
+    <script src="bundle.js"></script>
+    <button id="uploadBtn" style="
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #6c47ff;
+  color: white;
+  font-size: 16px;
+">
+  Upload Photo
+</button>
+
+<input id="fileInput" type="file" accept="image/*" style="display:none;" />
+</body>
+
+</html>
