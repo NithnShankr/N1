@@ -1,5 +1,4 @@
 <!doctype html>
-
 <html>
 
 <head>
@@ -7,100 +6,97 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Empty Project</title>
 
-```
-<meta itemprop="name" content="Empty Project">
-<meta name="twitter:title" content="Empty Project">
-<meta property="og:title" content="Empty Project">
-<meta property="og:site_name" content="Empty Project">
+    <meta itemprop="name" content="Empty Project">
+    <meta name="twitter:title" content="Empty Project">
+    <meta property="og:title" content="Empty Project">
+    <meta property="og:site_name" content="Empty Project">
 
-<meta name="description" content="Start with a blank project.">
-<meta itemprop="description" content="Start with a blank project.">
-<meta property="og:description" content="Start with a blank project.">
-<meta name="twitter:description" content="Start with a blank project.">
+    <meta name="description" content="Start with a blank project.">
+    <meta itemprop="description" content="Start with a blank project.">
+    <meta property="og:description" content="Start with a blank project.">
+    <meta name="twitter:description" content="Start with a blank project.">
 
-<!-- 8th Wall Runtime -->
-<script crossorigin="anonymous" src="./external/runtime/runtime.js"></script>
-<script crossorigin="anonymous" src="./external/xr/xr.js" async="true" data-preload-chunks="face, slam"></script>
+    <script crossorigin="anonymous" src="./external/runtime/runtime.js"></script>
+    <script crossorigin="anonymous" src="./external/xr/xr.js" async="true" data-preload-chunks="face, slam"></script>
 
-<!-- Button Styling -->
-<style>
-    #uploadBtn {
-        position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 9999;
-        padding: 14px 22px;
-        border: none;
-        border-radius: 12px;
-        background: #6c47ff;
-        color: white;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-</style>
-```
-
+    <style>
+        #uploadBtn {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            padding: 14px 22px;
+            border: none;
+            border-radius: 12px;
+            background: #6c47ff;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body>
 
-```
-<!-- Upload Button -->
-<button id="uploadBtn">Upload Photo</button>
+    <button id="uploadBtn">Upload Photo</button>
+    <input id="fileInput" type="file" accept="image/*" style="display:none;" />
 
-<!-- Hidden File Input -->
-<input id="fileInput" type="file" accept="image/*" style="display:none;" />
+    <script src="bundle.js"></script>
 
-<!-- Your AR bundle -->
-<script src="bundle.js"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js'
+        import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js'
 
-<!-- Upload Logic -->
-<script>
-    window.addEventListener('DOMContentLoaded', () => {
-        const uploadBtn = document.getElementById('uploadBtn')
-        const fileInput = document.getElementById('fileInput')
+            // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBig4hY99jniHqYOCJX4Nb7di41eUlAqq8",
+  authDomain: "novo-b4706.firebaseapp.com",
+  projectId: "novo-b4706",
+  storageBucket: "novo-b4706.firebasestorage.app",
+  messagingSenderId: "167456023306",
+  appId: "1:167456023306:web:435abe1a1905703d5290f3",
+  measurementId: "G-6CL5V3MZG0"
+};
 
-        if (!uploadBtn || !fileInput) {
-            console.warn('Upload elements not found')
-            return
-        }
+        const app = initializeApp(firebaseConfig)
+        const storage = getStorage(app)
 
-        // Open file picker
-        uploadBtn.addEventListener('click', () => {
-            fileInput.click()
-        })
+        window.addEventListener('DOMContentLoaded', () => {
+            const uploadBtn = document.getElementById('uploadBtn')
+            const fileInput = document.getElementById('fileInput')
 
-        // Handle file selection + upload
-        fileInput.addEventListener('change', async (event) => {
-            const file = event.target.files[0]
-            if (!file) return
-
-            const formData = new FormData()
-            formData.append('photo', file)
-
-            try {
-                const response = await fetch('https://your-server.com/upload', {
-                    method: 'POST',
-                    body: formData,
-                })
-
-                if (!response.ok) {
-                    throw new Error(`Upload failed: ${response.status}`)
-                }
-
-                const result = await response.json()
-                console.log('Upload success:', result)
-                alert('Upload complete ✅')
-            } catch (err) {
-                console.error(err)
-                alert('Upload failed ❌')
+            if (!uploadBtn || !fileInput) {
+                console.warn('Upload elements not found')
+                return
             }
+
+            uploadBtn.addEventListener('click', () => {
+                fileInput.click()
+            })
+
+            fileInput.addEventListener('change', async (event) => {
+                const file = event.target.files[0]
+                if (!file) return
+
+                try {
+                    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+                    const uniqueName = `${Date.now()}_${safeName}`
+                    const storageRef = ref(storage, `uploads/${uniqueName}`)
+
+                    await uploadBytes(storageRef, file)
+                    const downloadURL = await getDownloadURL(storageRef)
+
+                    console.log('Upload success:', downloadURL)
+                    alert('Upload complete ✅')
+                } catch (err) {
+                    console.error(err)
+                    alert('Upload failed ❌')
+                }
+            })
         })
-    })
-</script>
-```
+    </script>
 
 </body>
 
