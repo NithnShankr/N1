@@ -115,7 +115,6 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js'
         import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js'
 
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
         const firebaseConfig = {
             apiKey: "AIzaSyBig4hY99jniHqYOCJX4Nb7di41eUlAqq8",
             authDomain: "novo-b4706.firebaseapp.com",
@@ -137,6 +136,7 @@
 
             let capturedBlob = null
             let capturedFileName = ''
+            let screenshotReady = false
 
             const setStatus = (message, autoHide = false) => {
                 statusMessage.textContent = message
@@ -150,25 +150,40 @@
                 }
             }
 
-            const findActiveCanvas = () => {
-                const canvases = Array.from(document.querySelectorAll('canvas'))
-                if (!canvases.length) return null
+            const base64ToBlob = (base64Data, contentType = 'image/jpeg') => {
+                const byteCharacters = atob(base64Data)
+                const byteArrays = []
 
-                return canvases
-                    .filter((canvas) => canvas.width > 0 && canvas.height > 0)
-                    .sort((a, b) => (b.width * b.height) - (a.width * a.height))[0] || null
+                for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                    const slice = byteCharacters.slice(offset, offset + 512)
+                    const byteNumbers = new Array(slice.length)
+
+                    for (let i = 0; i < slice.length; i++) {
+                        byteNumbers[i] = slice.charCodeAt(i)
+                    }
+
+                    const byteArray = new Uint8Array(byteNumbers)
+                    byteArrays.push(byteArray)
+                }
+
+                return new Blob(byteArrays, { type: contentType })
             }
 
-            const captureCanvasBlob = (canvas) => {
-                return new Promise((resolve, reject) => {
-                    canvas.toBlob((blob) => {
-                        if (blob) {
-                            resolve(blob)
-                        } else {
-                            reject(new Error('Could not create image blob from canvas'))
-                        }
-                    }, 'image/jpeg', 0.92)
-                })
+            const ensureScreenshotModule = () => {
+                const { XR8 } = window
+
+                if (!XR8 || !XR8.CanvasScreenshot) {
+                    throw new Error('XR8 screenshot API is not available yet')
+                }
+
+                if (!screenshotReady) {
+                    XR8.addCameraPipelineModule(XR8.CanvasScreenshot.pipelineModule())
+                    XR8.CanvasScreenshot.configure({
+                        maxDimension: 1280,
+                        jpgCompression: 90,
+                    })
+                    screenshotReady = true
+                }
             }
 
             captureBtn.addEventListener('click', async () => {
@@ -177,17 +192,15 @@
                     uploadBtn.disabled = true
                     setStatus('Capturing photo...')
 
-                    const canvas = findActiveCanvas()
+                    ensureScreenshotModule()
 
-                    if (!canvas) {
-                        throw new Error('Camera canvas not found')
-                    }
+                    const { XR8 } = window
+                    const imageData = await XR8.CanvasScreenshot.takeScreenshot()
 
-                    const blob = await captureCanvasBlob(canvas)
-                    capturedBlob = blob
+                    capturedBlob = base64ToBlob(imageData, 'image/jpeg')
                     capturedFileName = `capture_${Date.now()}.jpg`
 
-                    const previewUrl = URL.createObjectURL(blob)
+                    const previewUrl = URL.createObjectURL(capturedBlob)
                     capturePreview.src = previewUrl
                     capturePreview.style.display = 'block'
 
@@ -216,7 +229,7 @@
                     const storageRef = ref(storage, `uploads/${uniqueName}`)
 
                     await uploadBytes(storageRef, capturedBlob, {
-                        contentType: capturedBlob.type || 'image/jpeg'
+                        contentType: 'image/jpeg'
                     })
 
                     const downloadURL = await getDownloadURL(storageRef)
