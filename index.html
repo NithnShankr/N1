@@ -16,12 +16,59 @@
     <meta property="og:description" content="Start with a blank project.">
     <meta name="twitter:description" content="Start with a blank project.">
 
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
     <script crossorigin="anonymous" src="./external/runtime/runtime.js"></script>
     <script crossorigin="anonymous" src="./external/xr/xr.js" async="true" data-preload-chunks="face, slam"></script>
 
     <style>
         body {
             margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        #flashOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 120ms ease;
+        }
+
+        #flashOverlay.active {
+            opacity: 0.9;
+        }
+
+        #captureOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9998;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        #captureOverlay.visible {
+            display: flex;
+        }
+
+        #capturePreview {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: calc(100vw - 32px);
+            max-height: calc(100vh - 32px);
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 12px;
+            border: 2px solid #ffffff;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
         }
 
         #controls {
@@ -33,11 +80,15 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            width: calc(100vw - 32px);
+            max-width: 460px;
+            justify-content: center;
         }
 
         #captureBtn,
-        #uploadBtn {
-            padding: 14px 22px;
+        #uploadBtn,
+        #shareBtn {
+            padding: 14px 18px;
             border: none;
             border-radius: 12px;
             color: white;
@@ -45,75 +96,98 @@
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            min-width: 110px;
         }
 
         #captureBtn {
             background: #1f8bff;
         }
 
+        #captureBtn.retake {
+            background: #e53935;
+        }
+
         #uploadBtn {
             background: #6c47ff;
         }
 
+        #shareBtn {
+            background: #10a37f;
+        }
+
+        #captureBtn:disabled,
         #uploadBtn:disabled,
-        #captureBtn:disabled {
+        #shareBtn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
 
-        #statusMessage {
+        #statusToast {
             position: fixed;
-            bottom: 86px;
             left: 50%;
+            bottom: 92px;
             transform: translateX(-50%);
             z-index: 9999;
+            max-width: calc(100vw - 32px);
             min-width: 220px;
-            max-width: 80vw;
             padding: 10px 14px;
-            border-radius: 10px;
+            border-radius: 999px;
             background: rgba(0, 0, 0, 0.75);
             color: white;
             font-size: 14px;
+            line-height: 1.2;
             text-align: center;
-            font-family: Arial, sans-serif;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-sizing: border-box;
         }
 
-        #statusMessage.hidden {
+        #statusToast.visible {
+            display: inline-flex;
+        }
+
+        #statusToast.success {
+            background: rgba(22, 101, 52, 0.92);
+        }
+
+        #statusIcon {
+            font-size: 18px;
             display: none;
         }
 
-        #capturePreview {
-            position: fixed;
-            top: 16px;
-            right: 16px;
-            width: 120px;
-            height: 160px;
-            object-fit: cover;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.9);
-            background: rgba(0, 0, 0, 0.35);
-            z-index: 9999;
-            display: none;
+        #statusToast.success #statusIcon {
+            display: inline-block;
+            color: #86efac;
         }
     </style>
 </head>
 
 <body>
 
-    <div id="statusMessage" class="hidden"></div>
+    <div id="flashOverlay"></div>
 
-    <img id="capturePreview" alt="Captured preview" />
+    <div id="captureOverlay">
+        <img id="capturePreview" alt="Captured preview" />
+    </div>
+
+    <div id="statusToast">
+        <span id="statusText"></span>
+        <span id="statusIcon" class="material-icons">check_circle</span>
+    </div>
 
     <div id="controls">
         <button id="captureBtn" type="button">Capture</button>
-        <button id="uploadBtn" type="button">Upload Photo</button>
+        <button id="uploadBtn" type="button">Upload</button>
+        <button id="shareBtn" type="button">Share</button>
     </div>
 
     <script src="bundle.js"></script>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js'
-        import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js'
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js'
 
         const firebaseConfig = {
             apiKey: "AIzaSyBig4hY99jniHqYOCJX4Nb7di41eUlAqq8",
@@ -131,23 +205,81 @@
         window.addEventListener('DOMContentLoaded', () => {
             const captureBtn = document.getElementById('captureBtn')
             const uploadBtn = document.getElementById('uploadBtn')
-            const statusMessage = document.getElementById('statusMessage')
+            const shareBtn = document.getElementById('shareBtn')
+            const captureOverlay = document.getElementById('captureOverlay')
             const capturePreview = document.getElementById('capturePreview')
+            const flashOverlay = document.getElementById('flashOverlay')
+            const statusToast = document.getElementById('statusToast')
+            const statusText = document.getElementById('statusText')
 
             let capturedBlob = null
             let capturedFileName = ''
             let screenshotReady = false
+            let previewUrl = null
+            let statusTimer = null
+            let hasCapturedImage = false
 
-            const setStatus = (message, autoHide = false) => {
-                statusMessage.textContent = message
-                statusMessage.classList.remove('hidden')
+            const shareSubject = 'Placeholder Subject'
+            const shareLink = 'https://nithnshankr.github.io/N1/'
+            const shareText = `Placeholder Text ${shareLink}`
 
-                if (autoHide) {
-                    window.clearTimeout(setStatus.hideTimer)
-                    setStatus.hideTimer = window.setTimeout(() => {
-                        statusMessage.classList.add('hidden')
-                    }, 2500)
+            const showOverlay = () => {
+                captureOverlay.classList.add('visible')
+            }
+
+            const hideOverlay = () => {
+                captureOverlay.classList.remove('visible')
+                capturePreview.removeAttribute('src')
+
+                if (previewUrl) {
+                    URL.revokeObjectURL(previewUrl)
+                    previewUrl = null
                 }
+            }
+
+            const resetCaptureState = () => {
+                hideOverlay()
+                capturedBlob = null
+                capturedFileName = ''
+                hasCapturedImage = false
+                captureBtn.textContent = 'Capture'
+                captureBtn.classList.remove('retake')
+            }
+
+            const setCapturedState = () => {
+                hasCapturedImage = true
+                captureBtn.textContent = 'Retake'
+                captureBtn.classList.add('retake')
+            }
+
+            const showStatus = (message, isSuccess = false, autoHideMs = 0) => {
+                window.clearTimeout(statusTimer)
+                statusText.textContent = message
+                statusToast.classList.add('visible')
+
+                if (isSuccess) {
+                    statusToast.classList.add('success')
+                } else {
+                    statusToast.classList.remove('success')
+                }
+
+                if (autoHideMs > 0) {
+                    statusTimer = window.setTimeout(() => {
+                        hideStatus()
+                    }, autoHideMs)
+                }
+            }
+
+            const hideStatus = () => {
+                window.clearTimeout(statusTimer)
+                statusToast.classList.remove('visible', 'success')
+                statusText.textContent = ''
+            }
+
+            const triggerFlash = async () => {
+                flashOverlay.classList.add('active')
+                await new Promise((resolve) => window.setTimeout(resolve, 90))
+                flashOverlay.classList.remove('active')
             }
 
             const base64ToBlob = (base64Data, contentType = 'image/jpeg') => {
@@ -186,12 +318,53 @@
                 }
             }
 
+            const createShareFile = async () => {
+                if (!capturePreview.src) {
+                    throw new Error('No captured preview available')
+                }
+
+                const img = new Image()
+                img.decoding = 'async'
+                img.src = capturePreview.src
+
+                await img.decode()
+
+                const canvas = document.createElement('canvas')
+                canvas.width = img.naturalWidth
+                canvas.height = img.naturalHeight
+
+                const ctx = canvas.getContext('2d')
+                ctx.drawImage(img, 0, 0)
+
+                const blob = await new Promise((resolve, reject) => {
+                    canvas.toBlob((result) => {
+                        if (result) {
+                            resolve(result)
+                        } else {
+                            reject(new Error('Could not create share image'))
+                        }
+                    }, 'image/png')
+                })
+
+                return new File([blob], `share_${Date.now()}.png`, {
+                    type: 'image/png',
+                    lastModified: Date.now(),
+                })
+            }
+
             captureBtn.addEventListener('click', async () => {
+                if (hasCapturedImage) {
+                    resetCaptureState()
+                    hideStatus()
+                    return
+                }
+
                 try {
                     captureBtn.disabled = true
                     uploadBtn.disabled = true
-                    setStatus('Capturing photo...')
+                    shareBtn.disabled = true
 
+                    await triggerFlash()
                     ensureScreenshotModule()
 
                     const { XR8 } = window
@@ -200,48 +373,106 @@
                     capturedBlob = base64ToBlob(imageData, 'image/jpeg')
                     capturedFileName = `capture_${Date.now()}.jpg`
 
-                    const previewUrl = URL.createObjectURL(capturedBlob)
-                    capturePreview.src = previewUrl
-                    capturePreview.style.display = 'block'
+                    if (previewUrl) {
+                        URL.revokeObjectURL(previewUrl)
+                    }
 
-                    setStatus('Photo captured. Tap Upload Photo to upload it.', true)
+                    previewUrl = URL.createObjectURL(capturedBlob)
+                    capturePreview.src = previewUrl
+
+                    showOverlay()
+                    setCapturedState()
+                    hideStatus()
                 } catch (err) {
                     console.error(err)
-                    setStatus('Capture failed. Please try again.')
+                    showStatus('Capture failed. Please try again.')
                 } finally {
                     captureBtn.disabled = false
                     uploadBtn.disabled = false
+                    shareBtn.disabled = false
                 }
             })
 
             uploadBtn.addEventListener('click', async () => {
                 if (!capturedBlob) {
-                    setStatus('Please capture a photo first.')
+                    showStatus('Please capture a photo first.')
                     return
                 }
 
                 try {
                     captureBtn.disabled = true
                     uploadBtn.disabled = true
-                    setStatus('Uploading photo...')
+                    shareBtn.disabled = true
+
+                    showStatus('Uploading... 0%')
 
                     const uniqueName = capturedFileName || `capture_${Date.now()}.jpg`
                     const storageRef = ref(storage, `uploads/${uniqueName}`)
 
-                    await uploadBytes(storageRef, capturedBlob, {
+                    const uploadTask = uploadBytesResumable(storageRef, capturedBlob, {
                         contentType: 'image/jpeg'
                     })
 
-                    const downloadURL = await getDownloadURL(storageRef)
+                    await new Promise((resolve, reject) => {
+                        uploadTask.on(
+                            'state_changed',
+                            (snapshot) => {
+                                const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
+                                showStatus(`Uploading... ${progress}%`)
+                            },
+                            (error) => {
+                                reject(error)
+                            },
+                            () => {
+                                resolve()
+                            }
+                        )
+                    })
 
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
                     console.log('Upload success:', downloadURL)
-                    setStatus('Upload complete ✅', true)
+
+                    showStatus('Upload Completed', true, 2000)
                 } catch (err) {
                     console.error(err)
-                    setStatus('Upload failed ❌')
+                    showStatus('Upload failed ❌')
                 } finally {
                     captureBtn.disabled = false
                     uploadBtn.disabled = false
+                    shareBtn.disabled = false
+                }
+            })
+
+            shareBtn.addEventListener('click', async () => {
+                if (!capturedBlob) {
+                    showStatus('Please capture a photo first.')
+                    return
+                }
+
+                try {
+                    const shareFile = await createShareFile()
+
+                    if (navigator.canShare && navigator.canShare({ files: [shareFile] })) {
+                        await navigator.share({
+                            title: shareSubject,
+                            text: shareText,
+                            files: [shareFile]
+                        })
+                    } else if (navigator.share) {
+                        await navigator.share({
+                            title: shareSubject,
+                            text: shareText
+                        })
+                    } else {
+                        await navigator.clipboard.writeText(shareText)
+                        showStatus('Share not supported. Text copied instead.', false, 2000)
+                        return
+                    }
+                } catch (err) {
+                    if (err && err.name !== 'AbortError') {
+                        console.error(err)
+                        showStatus('Share failed.')
+                    }
                 }
             })
         })
