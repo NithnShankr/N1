@@ -232,7 +232,7 @@
 
 <body>
 
-    <div id="versionTag">v1.18</div>
+    <div id="versionTag">v1.22</div>
 
     <div id="flashOverlay"></div>
 
@@ -323,18 +323,36 @@
                     textureSrc: 'assets/tex1.jpeg',
                     graphId: '53886995-3b91-4a4d-8383-53793d5c31dd',
                     name: 'F1',
+                    offsetX: 0.15,
+                    offsetY: -0.05,
+                    metalness: 0,
+                    roughness: 0.5,
+                    repeatX: 1,
+                    repeatY: 1,
                 },
                 {
                     label: 'Face 2',
                     textureSrc: 'assets/tex2.jpeg',
                     graphId: '02f209c5-68f9-4521-96d8-3767638da001',
                     name: 'F2',
+                    offsetX: 0,
+                    offsetY: 0.15,
+                    metalness: 0,
+                    roughness: 0,
+                    repeatX: 1,
+                    repeatY: 1,
                 },
                 {
                     label: 'Face 3',
                     textureSrc: 'assets/tex3.jpeg',
                     graphId: '73298db5-f37a-479a-b905-553c44a3ae52',
                     name: 'F3',
+                    offsetX: -0.1,
+                    offsetY: 0.1,
+                    metalness: 0,
+                    roughness: 0,
+                    repeatX: 1.75,
+                    repeatY: 1.75,
                 },
             ]
 
@@ -565,7 +583,7 @@
                 return null
             }
 
-            const setFaceMeshState = (ecsRuntime, world, faceMeshEid, isVisible) => {
+            const setFaceMeshState = (ecsRuntime, world, faceMesh, faceMeshEid, isVisible) => {
                 const faceMeshObject = world.three?.entityToObject?.get(faceMeshEid)
 
                 if (faceMeshObject) {
@@ -591,6 +609,19 @@
                     } else {
                         ecsRuntime.Hidden.set(world, faceMeshEid)
                     }
+                }
+
+                if (isVisible && ecsRuntime.Material) {
+                    ecsRuntime.Material.mutate(world, faceMeshEid, (material) => {
+                        material.textureSrc = faceMesh.textureSrc
+                        material.offsetX = faceMesh.offsetX
+                        material.offsetY = faceMesh.offsetY
+                        material.repeatX = faceMesh.repeatX
+                        material.repeatY = faceMesh.repeatY
+                        material.metalness = faceMesh.metalness
+                        material.roughness = faceMesh.roughness
+                        return false
+                    })
                 }
             }
 
@@ -661,7 +692,7 @@
                 }
 
                 resolvedFaces.forEach((faceMesh, index) => {
-                    setFaceMeshState(ecsRuntime, world, faceMesh.eid, index === targetIndex)
+                    setFaceMeshState(ecsRuntime, world, faceMesh, faceMesh.eid, index === targetIndex)
                 })
 
                 activeFaceIndex = targetIndex

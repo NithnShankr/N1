@@ -39,7 +39,7 @@
           "face": {
             "mirroredDisplay": true,
             "meshGeometryFace": true,
-            "meshGeometryEyes": false,
+            "meshGeometryEyes": true,
             "meshGeometryIris": false,
             "meshGeometryMouth": false,
             "enableEars": false
@@ -162,9 +162,11 @@
         "wireframe": false,
         "forceTransparent": true,
         "wrap": "clamp",
-        "offsetX": 0,
-        "offsetY": 0,
-        "blending": "multiply"
+        "offsetX": 0.15,
+        "offsetY": -0.05,
+        "blending": "normal",
+        "metalness": 0,
+        "roughness": 0.5
       },
       "parentId": "44723f32-7598-4505-8642-64071b450690",
       "components": {
@@ -180,7 +182,7 @@
         "castShadow": true,
         "receiveShadow": true
       },
-      "hidden": true
+      "hidden": false
     },
     "02f209c5-68f9-4521-96d8-3767638da001": {
       "id": "02f209c5-68f9-4521-96d8-3767638da001",
@@ -217,8 +219,9 @@
         "forceTransparent": true,
         "wrap": "clamp",
         "offsetX": 0,
-        "offsetY": 0,
-        "blending": "multiply"
+        "offsetY": 0.15,
+        "blending": "multiply",
+        "metalness": 0
       },
       "parentId": "44723f32-7598-4505-8642-64071b450690",
       "components": {
@@ -270,9 +273,12 @@
         "wireframe": false,
         "forceTransparent": true,
         "wrap": "clamp",
-        "offsetX": 0,
-        "offsetY": 0,
-        "blending": "multiply"
+        "offsetX": -0.1,
+        "offsetY": 0.1,
+        "blending": "multiply",
+        "metalness": 0,
+        "repeatX": 1.75,
+        "repeatY": 1.75
       },
       "parentId": "44723f32-7598-4505-8642-64071b450690",
       "components": {
