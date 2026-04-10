@@ -87,7 +87,8 @@
 
         #captureBtn,
         #uploadBtn,
-        #shareBtn {
+        #shareBtn,
+        #hideFaceMeshBtn {
             padding: 14px 18px;
             border: none;
             border-radius: 12px;
@@ -115,9 +116,14 @@
             background: #10a37f;
         }
 
+        #hideFaceMeshBtn {
+            background: #111827;
+        }
+
         #captureBtn:disabled,
         #uploadBtn:disabled,
-        #shareBtn:disabled {
+        #shareBtn:disabled,
+        #hideFaceMeshBtn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
@@ -181,6 +187,7 @@
         <button id="captureBtn" type="button">Capture</button>
         <button id="uploadBtn" type="button">Upload</button>
         <button id="shareBtn" type="button">Share</button>
+        <button id="hideFaceMeshBtn" type="button">Face OFF</button>
     </div>
 
     <script src="bundle.js"></script>
@@ -206,6 +213,7 @@
             const captureBtn = document.getElementById('captureBtn')
             const uploadBtn = document.getElementById('uploadBtn')
             const shareBtn = document.getElementById('shareBtn')
+            const hideFaceMeshBtn = document.getElementById('hideFaceMeshBtn')
             const captureOverlay = document.getElementById('captureOverlay')
             const capturePreview = document.getElementById('capturePreview')
             const flashOverlay = document.getElementById('flashOverlay')
@@ -218,6 +226,8 @@
             let previewUrl = null
             let statusTimer = null
             let hasCapturedImage = false
+            let faceMeshHidden = false
+            const faceMeshGraphId = '53886995-3b91-4a4d-8383-53793d5c31dd'
 
             const shareSubject = 'Placeholder Subject'
             const shareLink = 'https://nithnshankr.github.io/N1/'
@@ -352,6 +362,30 @@
                 })
             }
 
+            const getFaceMeshEid = () => {
+                const ecsRuntime = window.ecs
+                const sceneHandle = ecsRuntime?.application?.getScene?.()
+
+                if (!sceneHandle) {
+                    return null
+                }
+
+                const directEid = sceneHandle.graphIdToEid?.get(faceMeshGraphId)
+                if (directEid !== undefined) {
+                    return directEid
+                }
+
+                if (sceneHandle.eidToObject) {
+                    for (const [eid, graphObject] of sceneHandle.eidToObject.entries()) {
+                        if (graphObject?.name === 'Face Mesh') {
+                            return eid
+                        }
+                    }
+                }
+
+                return null
+            }
+
             captureBtn.addEventListener('click', async () => {
                 if (hasCapturedImage) {
                     resetCaptureState()
@@ -474,6 +508,45 @@
                         showStatus('Share failed.')
                     }
                 }
+            })
+
+            hideFaceMeshBtn.addEventListener('click', () => {
+                const ecsRuntime = window.ecs
+                const world = ecsRuntime?.application?.getWorld?.()
+                const faceMeshEid = getFaceMeshEid()
+
+                if (!ecsRuntime?.Hidden || !world || faceMeshEid === null) {
+                    showStatus('Scene is still loading.')
+                    return
+                }
+
+                const faceMeshObject = world.three?.entityToObject?.get(faceMeshEid)
+                const nextHiddenState = !faceMeshHidden
+
+                if (faceMeshObject) {
+                    faceMeshObject.traverse((child) => {
+                        child.visible = !nextHiddenState
+                    })
+                    if (typeof world.three?.notifyChanged === 'function') {
+                        world.three.notifyChanged(faceMeshObject)
+                    }
+                }
+
+                if (nextHiddenState && ecsRuntime.Disabled) {
+                    ecsRuntime.Disabled.set(world, faceMeshEid)
+                } else if (!nextHiddenState && ecsRuntime.Disabled) {
+                    ecsRuntime.Disabled.remove(world, faceMeshEid)
+                }
+
+                if (nextHiddenState) {
+                    ecsRuntime.Hidden.set(world, faceMeshEid)
+                } else {
+                    ecsRuntime.Hidden.remove(world, faceMeshEid)
+                }
+
+                faceMeshHidden = nextHiddenState
+                hideFaceMeshBtn.textContent = faceMeshHidden ? 'Face ON' : 'Face OFF'
+                showStatus(faceMeshHidden ? 'Face mesh hidden.' : 'Face mesh visible.', true, 2000)
             })
         })
     </script>
