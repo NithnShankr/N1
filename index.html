@@ -28,6 +28,20 @@
             font-family: Arial, sans-serif;
         }
 
+        #versionTag {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10001;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+            pointer-events: none;
+        }
+
         #flashOverlay {
             position: fixed;
             inset: 0;
@@ -172,6 +186,8 @@
 
 <body>
 
+    <div id="versionTag">v5</div>
+
     <div id="flashOverlay"></div>
 
     <div id="captureOverlay">
@@ -187,7 +203,7 @@
         <button id="captureBtn" type="button">Capture</button>
         <button id="uploadBtn" type="button">Upload</button>
         <button id="shareBtn" type="button">Share</button>
-        <button id="hideFaceMeshBtn" type="button">Face OFF</button>
+        <button id="hideFaceMeshBtn" type="button">Face 1</button>
     </div>
 
     <script src="bundle.js"></script>
@@ -213,7 +229,7 @@
             const captureBtn = document.getElementById('captureBtn')
             const uploadBtn = document.getElementById('uploadBtn')
             const shareBtn = document.getElementById('shareBtn')
-            const hideFaceMeshBtn = document.getElementById('hideFaceMeshBtn')
+            const faceBtn = document.getElementById('hideFaceMeshBtn')
             const captureOverlay = document.getElementById('captureOverlay')
             const capturePreview = document.getElementById('capturePreview')
             const flashOverlay = document.getElementById('flashOverlay')
@@ -226,8 +242,33 @@
             let previewUrl = null
             let statusTimer = null
             let hasCapturedImage = false
-            let faceMeshHidden = false
-            const faceMeshGraphId = '53886995-3b91-4a4d-8383-53793d5c31dd'
+            let activeFaceIndex = 0
+
+            const primaryFaceMesh = {
+                graphId: '53886995-3b91-4a4d-8383-53793d5c31dd',
+                name: 'F1',
+            }
+
+            const faceMeshes = [
+                {
+                    label: 'Face 1',
+                    textureSrc: 'assets/tex1.jpeg',
+                    sourceGraphId: '53886995-3b91-4a4d-8383-53793d5c31dd',
+                    sourceName: 'F1',
+                },
+                {
+                    label: 'Face 2',
+                    textureSrc: 'assets/tex2.jpeg',
+                    sourceGraphId: '02f209c5-68f9-4521-96d8-3767638da001',
+                    sourceName: 'F2',
+                },
+                {
+                    label: 'Face 3',
+                    textureSrc: 'assets/tex3.jpeg',
+                    sourceGraphId: '73298db5-f37a-479a-b905-553c44a3ae52',
+                    sourceName: 'F3',
+                },
+            ]
 
             const shareSubject = 'Placeholder Subject'
             const shareLink = 'https://nithnshankr.github.io/N1/'
@@ -362,28 +403,137 @@
                 })
             }
 
-            const getFaceMeshEid = () => {
+            const getFaceMeshEid = (faceMesh) => {
                 const ecsRuntime = window.ecs
+                const world = ecsRuntime?.application?.getWorld?.()
                 const sceneHandle = ecsRuntime?.application?.getScene?.()
+                const getObjectEid = (object3d) => {
+                    let current = object3d
 
-                if (!sceneHandle) {
+                    while (current) {
+                        if (current.userData?.eid !== undefined) {
+                            return current.userData.eid
+                        }
+                        current = current.parent
+                    }
+
                     return null
                 }
 
-                const directEid = sceneHandle.graphIdToEid?.get(faceMeshGraphId)
-                if (directEid !== undefined) {
-                    return directEid
+                if (sceneHandle) {
+                    const directEid = sceneHandle.graphIdToEid?.get(faceMesh.graphId)
+                    if (directEid !== undefined) {
+                        return directEid
+                    }
+
+                    const fallbackEid = sceneHandle._graphIdToEidOrPrefab?.get(faceMesh.graphId)
+                    if (fallbackEid !== undefined) {
+                        return fallbackEid
+                    }
+
+                    if (sceneHandle.eidToObject) {
+                        for (const [eid, graphObject] of sceneHandle.eidToObject.entries()) {
+                            if (graphObject?.name === faceMesh.name) {
+                                return eid
+                            }
+                        }
+                    }
                 }
 
-                if (sceneHandle.eidToObject) {
-                    for (const [eid, graphObject] of sceneHandle.eidToObject.entries()) {
-                        if (graphObject?.name === 'Face Mesh') {
+                const sceneObject = world?.three?.scene?.getObjectByName?.(faceMesh.name)
+                const sceneObjectEid = getObjectEid(sceneObject)
+                if (sceneObjectEid !== null) {
+                    return sceneObjectEid
+                }
+
+                if (world?.three?.entityToObject) {
+                    for (const [eid, object3d] of world.three.entityToObject.entries()) {
+                        if (object3d?.name === faceMesh.name) {
+                            return eid
+                        }
+                    }
+                }
+
+                if (sceneObject && world?.three?.entityToObject) {
+                    for (const [eid, object3d] of world.three.entityToObject.entries()) {
+                        if (object3d === sceneObject) {
                             return eid
                         }
                     }
                 }
 
                 return null
+            }
+
+            const setFaceMeshVisibility = (world, ecsRuntime, eid, isVisible) => {
+                const faceMeshObject = world.three?.entityToObject?.get(eid)
+
+                if (faceMeshObject) {
+                    faceMeshObject.traverse((child) => {
+                        child.visible = isVisible
+                    })
+
+                    if (typeof world.three?.notifyChanged === 'function') {
+                        world.three.notifyChanged(faceMeshObject)
+                    }
+                }
+
+                if (ecsRuntime.Disabled) {
+                    if (isVisible) {
+                        ecsRuntime.Disabled.remove(world, eid)
+                    } else {
+                        ecsRuntime.Disabled.set(world, eid)
+                    }
+                }
+
+                if (ecsRuntime.Hidden) {
+                    if (isVisible) {
+                        ecsRuntime.Hidden.remove(world, eid)
+                    } else {
+                        ecsRuntime.Hidden.set(world, eid)
+                    }
+                }
+            }
+
+            const applyActiveFace = (targetIndex) => {
+                const ecsRuntime = window.ecs
+                const world = ecsRuntime?.application?.getWorld?.()
+                const faceMeshEid = getFaceMeshEid(primaryFaceMesh)
+
+                if (!world || faceMeshEid === null || !ecsRuntime?.Material) {
+                    showStatus('Scene is still loading.')
+                    return false
+                }
+
+                const nextFace = faceMeshes[targetIndex]
+                const faceMeshObject = world.three?.entityToObject?.get(faceMeshEid)
+
+                if (faceMeshObject) {
+                    faceMeshObject.traverse((child) => {
+                        child.visible = true
+                    })
+                    if (typeof world.three?.notifyChanged === 'function') {
+                        world.three.notifyChanged(faceMeshObject)
+                    }
+                }
+
+                if (ecsRuntime.Disabled) {
+                    ecsRuntime.Disabled.remove(world, faceMeshEid)
+                }
+
+                if (ecsRuntime.Hidden) {
+                    ecsRuntime.Hidden.remove(world, faceMeshEid)
+                }
+
+                ecsRuntime.Material.mutate(world, faceMeshEid, (material) => {
+                    material.textureSrc = nextFace.textureSrc
+                    return false
+                })
+
+                activeFaceIndex = targetIndex
+                faceBtn.textContent = nextFace.label
+                showStatus(`${nextFace.label} active.`, true, 1500)
+                return true
             }
 
             captureBtn.addEventListener('click', async () => {
@@ -510,44 +660,12 @@
                 }
             })
 
-            hideFaceMeshBtn.addEventListener('click', () => {
-                const ecsRuntime = window.ecs
-                const world = ecsRuntime?.application?.getWorld?.()
-                const faceMeshEid = getFaceMeshEid()
-
-                if (!ecsRuntime?.Hidden || !world || faceMeshEid === null) {
-                    showStatus('Scene is still loading.')
-                    return
-                }
-
-                const faceMeshObject = world.three?.entityToObject?.get(faceMeshEid)
-                const nextHiddenState = !faceMeshHidden
-
-                if (faceMeshObject) {
-                    faceMeshObject.traverse((child) => {
-                        child.visible = !nextHiddenState
-                    })
-                    if (typeof world.three?.notifyChanged === 'function') {
-                        world.three.notifyChanged(faceMeshObject)
-                    }
-                }
-
-                if (nextHiddenState && ecsRuntime.Disabled) {
-                    ecsRuntime.Disabled.set(world, faceMeshEid)
-                } else if (!nextHiddenState && ecsRuntime.Disabled) {
-                    ecsRuntime.Disabled.remove(world, faceMeshEid)
-                }
-
-                if (nextHiddenState) {
-                    ecsRuntime.Hidden.set(world, faceMeshEid)
-                } else {
-                    ecsRuntime.Hidden.remove(world, faceMeshEid)
-                }
-
-                faceMeshHidden = nextHiddenState
-                hideFaceMeshBtn.textContent = faceMeshHidden ? 'Face ON' : 'Face OFF'
-                showStatus(faceMeshHidden ? 'Face mesh hidden.' : 'Face mesh visible.', true, 2000)
+            faceBtn.addEventListener('click', () => {
+                const nextIndex = (activeFaceIndex + 1) % faceMeshes.length
+                applyActiveFace(nextIndex)
             })
+
+            faceBtn.textContent = faceMeshes[activeFaceIndex].label
         })
     </script>
 

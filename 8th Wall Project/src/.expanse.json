@@ -155,7 +155,7 @@
         "color": "#ffffff",
         "textureSrc": {
           "type": "asset",
-          "asset": "assets/Q0FFUTlPcF8_1.jpeg"
+          "asset": "assets/tex1.jpeg"
         },
         "depthTest": true,
         "depthWrite": true,
@@ -174,7 +174,7 @@
           "parameters": {}
         }
       },
-      "name": "Face Mesh",
+      "name": "F1",
       "order": 4.272423302860497,
       "shadow": {
         "castShadow": true,
@@ -214,6 +214,114 @@
       },
       "name": "Text",
       "order": 6.256040942690979
+    },
+    "02f209c5-68f9-4521-96d8-3767638da001": {
+      "id": "02f209c5-68f9-4521-96d8-3767638da001",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "geometry": {
+        "type": "face",
+        "id": 1
+      },
+      "material": {
+        "type": "basic",
+        "color": "#ffffff",
+        "textureSrc": {
+          "type": "asset",
+          "asset": "assets/tex2.jpeg"
+        },
+        "depthTest": true,
+        "depthWrite": true,
+        "wireframe": false,
+        "forceTransparent": true,
+        "wrap": "clamp",
+        "offsetX": 0,
+        "offsetY": 0,
+        "blending": "multiply"
+      },
+      "parentId": "44723f32-7598-4505-8642-64071b450690",
+      "components": {
+        "34f94415-8474-4cd7-9fc1-f67c0e32a4b1": {
+          "id": "34f94415-8474-4cd7-9fc1-f67c0e32a4b1",
+          "name": "face-mesh-anchor",
+          "parameters": {}
+        }
+      },
+      "name": "F2",
+      "order": 4.791144137487075,
+      "shadow": {
+        "castShadow": true,
+        "receiveShadow": true
+      },
+      "hidden": true
+    },
+    "73298db5-f37a-479a-b905-553c44a3ae52": {
+      "id": "73298db5-f37a-479a-b905-553c44a3ae52",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "geometry": {
+        "type": "face",
+        "id": 1
+      },
+      "material": {
+        "type": "basic",
+        "color": "#ffffff",
+        "textureSrc": {
+          "type": "asset",
+          "asset": "assets/tex3.jpeg"
+        },
+        "depthTest": true,
+        "depthWrite": true,
+        "wireframe": false,
+        "forceTransparent": true,
+        "wrap": "clamp",
+        "offsetX": 0,
+        "offsetY": 0,
+        "blending": "multiply"
+      },
+      "parentId": "44723f32-7598-4505-8642-64071b450690",
+      "components": {
+        "34f94415-8474-4cd7-9fc1-f67c0e32a4b1": {
+          "id": "34f94415-8474-4cd7-9fc1-f67c0e32a4b1",
+          "name": "face-mesh-anchor",
+          "parameters": {}
+        }
+      },
+      "name": "F3",
+      "order": 5.839716236310053,
+      "shadow": {
+        "castShadow": true,
+        "receiveShadow": true
+      },
+      "hidden": true
     }
   },
   "spaces": {
