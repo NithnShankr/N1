@@ -179,41 +179,8 @@
       "shadow": {
         "castShadow": true,
         "receiveShadow": true
-      }
-    },
-    "c8e20ee3-ec73-4dfd-956a-dcd67d06e425": {
-      "id": "c8e20ee3-ec73-4dfd-956a-dcd67d06e425",
-      "position": [
-        0,
-        0.36100696912523444,
-        0.75
-      ],
-      "rotation": [
-        0,
-        0,
-        0,
-        1
-      ],
-      "scale": [
-        1,
-        1,
-        1
-      ],
-      "geometry": null,
-      "material": null,
-      "parentId": "44723f32-7598-4505-8642-64071b450690",
-      "components": {},
-      "ui": {
-        "width": 70,
-        "height": 10,
-        "text": "v4",
-        "color": "#ffffff",
-        "fontSize": 12,
-        "type": "3d",
-        "stackingOrder": 1
       },
-      "name": "Text",
-      "order": 6.256040942690979
+      "hidden": true
     },
     "02f209c5-68f9-4521-96d8-3767638da001": {
       "id": "02f209c5-68f9-4521-96d8-3767638da001",

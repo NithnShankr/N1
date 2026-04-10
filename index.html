@@ -227,7 +227,7 @@
 
 <body>
 
-    <div id="versionTag">v12</div>
+    <div id="versionTag">v14</div>
 
     <div id="flashOverlay"></div>
 
@@ -312,29 +312,24 @@
             let uploadProgressTimer = null
             let initHideTimer = null
 
-            const primaryFaceMesh = {
-                graphId: '53886995-3b91-4a4d-8383-53793d5c31dd',
-                name: 'F1',
-            }
-
             const faceMeshes = [
                 {
                     label: 'Face 1',
                     textureSrc: 'assets/tex1.jpeg',
-                    sourceGraphId: '53886995-3b91-4a4d-8383-53793d5c31dd',
-                    sourceName: 'F1',
+                    graphId: '53886995-3b91-4a4d-8383-53793d5c31dd',
+                    name: 'F1',
                 },
                 {
                     label: 'Face 2',
                     textureSrc: 'assets/tex2.jpeg',
-                    sourceGraphId: '02f209c5-68f9-4521-96d8-3767638da001',
-                    sourceName: 'F2',
+                    graphId: '02f209c5-68f9-4521-96d8-3767638da001',
+                    name: 'F2',
                 },
                 {
                     label: 'Face 3',
                     textureSrc: 'assets/tex3.jpeg',
-                    sourceGraphId: '73298db5-f37a-479a-b905-553c44a3ae52',
-                    sourceName: 'F3',
+                    graphId: '73298db5-f37a-479a-b905-553c44a3ae52',
+                    name: 'F3',
                 },
             ]
 
@@ -565,14 +560,13 @@
                 return null
             }
 
-            const setFaceMeshVisibility = (world, ecsRuntime, eid, isVisible) => {
-                const faceMeshObject = world.three?.entityToObject?.get(eid)
+            const setFaceMeshState = (ecsRuntime, world, faceMeshEid, isVisible) => {
+                const faceMeshObject = world.three?.entityToObject?.get(faceMeshEid)
 
                 if (faceMeshObject) {
                     faceMeshObject.traverse((child) => {
                         child.visible = isVisible
                     })
-
                     if (typeof world.three?.notifyChanged === 'function') {
                         world.three.notifyChanged(faceMeshObject)
                     }
@@ -580,17 +574,17 @@
 
                 if (ecsRuntime.Disabled) {
                     if (isVisible) {
-                        ecsRuntime.Disabled.remove(world, eid)
+                        ecsRuntime.Disabled.remove(world, faceMeshEid)
                     } else {
-                        ecsRuntime.Disabled.set(world, eid)
+                        ecsRuntime.Disabled.set(world, faceMeshEid)
                     }
                 }
 
                 if (ecsRuntime.Hidden) {
                     if (isVisible) {
-                        ecsRuntime.Hidden.remove(world, eid)
+                        ecsRuntime.Hidden.remove(world, faceMeshEid)
                     } else {
-                        ecsRuntime.Hidden.set(world, eid)
+                        ecsRuntime.Hidden.set(world, faceMeshEid)
                     }
                 }
             }
@@ -641,49 +635,29 @@
                 const { silent = false } = options
                 const ecsRuntime = window.ecs
                 const world = ecsRuntime?.application?.getWorld?.()
-                const faceMeshEid = getFaceMeshEid(primaryFaceMesh)
 
-                if (!world || faceMeshEid === null || !ecsRuntime?.Material) {
+                if (!world) {
                     if (!silent) {
                         showStatus('Scene is still loading.')
                     }
                     return false
                 }
 
-                const nextFace = targetIndex >= 0 ? faceMeshes[targetIndex] : null
-                const faceMeshObject = world.three?.entityToObject?.get(faceMeshEid)
+                const resolvedFaces = faceMeshes.map((faceMesh) => ({
+                    ...faceMesh,
+                    eid: getFaceMeshEid(faceMesh),
+                }))
 
-                if (faceMeshObject) {
-                    faceMeshObject.traverse((child) => {
-                        child.visible = targetIndex >= 0
-                    })
-                    if (typeof world.three?.notifyChanged === 'function') {
-                        world.three.notifyChanged(faceMeshObject)
+                if (resolvedFaces.some((faceMesh) => faceMesh.eid === null)) {
+                    if (!silent) {
+                        showStatus('Scene is still loading.')
                     }
+                    return false
                 }
 
-                if (ecsRuntime.Disabled) {
-                    if (targetIndex >= 0) {
-                        ecsRuntime.Disabled.remove(world, faceMeshEid)
-                    } else {
-                        ecsRuntime.Disabled.set(world, faceMeshEid)
-                    }
-                }
-
-                if (ecsRuntime.Hidden) {
-                    if (targetIndex >= 0) {
-                        ecsRuntime.Hidden.remove(world, faceMeshEid)
-                    } else {
-                        ecsRuntime.Hidden.set(world, faceMeshEid)
-                    }
-                }
-
-                if (nextFace) {
-                    ecsRuntime.Material.mutate(world, faceMeshEid, (material) => {
-                        material.textureSrc = nextFace.textureSrc
-                        return false
-                    })
-                }
+                resolvedFaces.forEach((faceMesh, index) => {
+                    setFaceMeshState(ecsRuntime, world, faceMesh.eid, index === targetIndex)
+                })
 
                 activeFaceIndex = targetIndex
                 updateFaceSelection(targetIndex)
