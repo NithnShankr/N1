@@ -31,11 +31,10 @@
         #versionTag {
             position: fixed;
             top: 12px;
-            left: 50%;
-            transform: translateX(-50%);
+            right: 12px;
             z-index: 10001;
             color: #ffffff;
-            font-size: 18px;
+            font-size: 12px;
             font-weight: 700;
             line-height: 1;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
@@ -63,21 +62,27 @@
             padding: 0;
             border-radius: 999px;
             border: 2px solid rgba(255, 255, 255, 0.35);
-            background: #111827;
+            background: #ffffff;
             overflow: hidden;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .faceOption.active {
             border-color: #22c55e;
+            border-width: 4px;
         }
 
         .faceOption img {
             display: block;
-            width: 100%;
+            width: auto;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            transform: scale(1.12);
+            transform-origin: center;
         }
 
         #flashOverlay {
@@ -227,7 +232,7 @@
 
 <body>
 
-    <div id="versionTag">v14</div>
+    <div id="versionTag">v1.18</div>
 
     <div id="flashOverlay"></div>
 
@@ -242,13 +247,13 @@
 
     <div id="faceControls">
         <button class="faceOption active" type="button" data-face-index="0" aria-label="Face 1">
-            <img src="assets/tex1.jpeg" alt="Face 1">
+            <img src="assets/1.jpeg" alt="Face 1">
         </button>
         <button class="faceOption" type="button" data-face-index="1" aria-label="Face 2">
-            <img src="assets/tex2.jpeg" alt="Face 2">
+            <img src="assets/2.jpeg" alt="Face 2">
         </button>
         <button class="faceOption" type="button" data-face-index="2" aria-label="Face 3">
-            <img src="assets/tex3.jpeg" alt="Face 3">
+            <img src="assets/3.jpeg" alt="Face 3">
         </button>
     </div>
 
