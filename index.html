@@ -35,11 +35,49 @@
             transform: translateX(-50%);
             z-index: 10001;
             color: #ffffff;
-            font-size: 12px;
+            font-size: 18px;
             font-weight: 700;
             line-height: 1;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
             pointer-events: none;
+        }
+
+        #faceControls {
+            position: fixed;
+            left: 50%;
+            bottom: 96px;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #faceControls.hidden {
+            display: none;
+        }
+
+        .faceOption {
+            width: 56px;
+            height: 56px;
+            padding: 0;
+            border-radius: 999px;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            background: #111827;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .faceOption.active {
+            border-color: #22c55e;
+        }
+
+        .faceOption img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         #flashOverlay {
@@ -72,11 +110,11 @@
 
         #capturePreview {
             position: absolute;
-            top: 50%;
+            top: 16px;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
             max-width: calc(100vw - 32px);
-            max-height: calc(100vh - 32px);
+            max-height: calc(100vh - 132px);
             width: auto;
             height: auto;
             object-fit: contain;
@@ -99,10 +137,14 @@
             justify-content: center;
         }
 
+        #controls.captureOnly #captureBtn {
+            width: min(460px, calc(100vw - 32px));
+            max-width: none;
+        }
+
         #captureBtn,
         #uploadBtn,
-        #shareBtn,
-        #hideFaceMeshBtn {
+        #shareBtn {
             padding: 14px 18px;
             border: none;
             border-radius: 12px;
@@ -112,6 +154,15 @@
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
             min-width: 110px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        #controls.captureOnly #uploadBtn,
+        #controls.captureOnly #shareBtn {
+            display: none;
         }
 
         #captureBtn {
@@ -130,14 +181,9 @@
             background: #10a37f;
         }
 
-        #hideFaceMeshBtn {
-            background: #111827;
-        }
-
         #captureBtn:disabled,
         #uploadBtn:disabled,
-        #shareBtn:disabled,
-        #hideFaceMeshBtn:disabled {
+        #shareBtn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
@@ -145,11 +191,10 @@
         #statusToast {
             position: fixed;
             left: 50%;
-            bottom: 92px;
+            bottom: 166px;
             transform: translateX(-50%);
             z-index: 9999;
             max-width: calc(100vw - 32px);
-            min-width: 220px;
             padding: 10px 14px;
             border-radius: 999px;
             background: rgba(0, 0, 0, 0.75);
@@ -164,29 +209,25 @@
             box-sizing: border-box;
         }
 
-        #statusToast.visible {
-            display: inline-flex;
-        }
-
-        #statusToast.success {
-            background: rgba(22, 101, 52, 0.92);
-        }
-
         #statusIcon {
             font-size: 18px;
             display: none;
         }
 
-        #statusToast.success #statusIcon {
-            display: inline-block;
-            color: #86efac;
+        #statusToast.visible {
+            display: inline-flex;
+        }
+
+        .material-icons.buttonIcon {
+            font-size: 20px;
+            line-height: 1;
         }
     </style>
 </head>
 
 <body>
 
-    <div id="versionTag">v5</div>
+    <div id="versionTag">v12</div>
 
     <div id="flashOverlay"></div>
 
@@ -199,11 +240,31 @@
         <span id="statusIcon" class="material-icons">check_circle</span>
     </div>
 
-    <div id="controls">
-        <button id="captureBtn" type="button">Capture</button>
-        <button id="uploadBtn" type="button">Upload</button>
-        <button id="shareBtn" type="button">Share</button>
-        <button id="hideFaceMeshBtn" type="button">Face 1</button>
+    <div id="faceControls">
+        <button class="faceOption active" type="button" data-face-index="0" aria-label="Face 1">
+            <img src="assets/tex1.jpeg" alt="Face 1">
+        </button>
+        <button class="faceOption" type="button" data-face-index="1" aria-label="Face 2">
+            <img src="assets/tex2.jpeg" alt="Face 2">
+        </button>
+        <button class="faceOption" type="button" data-face-index="2" aria-label="Face 3">
+            <img src="assets/tex3.jpeg" alt="Face 3">
+        </button>
+    </div>
+
+    <div id="controls" class="captureOnly">
+        <button id="captureBtn" type="button">
+            <span class="material-icons buttonIcon">photo_camera</span>
+            <span>Capture</span>
+        </button>
+        <button id="uploadBtn" type="button">
+            <span class="material-icons buttonIcon">cloud_upload</span>
+            <span>Upload</span>
+        </button>
+        <button id="shareBtn" type="button">
+            <span class="material-icons buttonIcon">share</span>
+            <span>Share</span>
+        </button>
     </div>
 
     <script src="bundle.js"></script>
@@ -226,15 +287,17 @@
         const storage = getStorage(app)
 
         window.addEventListener('DOMContentLoaded', () => {
+            const controls = document.getElementById('controls')
             const captureBtn = document.getElementById('captureBtn')
             const uploadBtn = document.getElementById('uploadBtn')
             const shareBtn = document.getElementById('shareBtn')
-            const faceBtn = document.getElementById('hideFaceMeshBtn')
+            const faceOptions = Array.from(document.querySelectorAll('.faceOption'))
             const captureOverlay = document.getElementById('captureOverlay')
             const capturePreview = document.getElementById('capturePreview')
             const flashOverlay = document.getElementById('flashOverlay')
             const statusToast = document.getElementById('statusToast')
             const statusText = document.getElementById('statusText')
+            const faceControls = document.getElementById('faceControls')
 
             let capturedBlob = null
             let capturedFileName = ''
@@ -243,6 +306,11 @@
             let statusTimer = null
             let hasCapturedImage = false
             let activeFaceIndex = 0
+            let hasUploadedCurrentCapture = false
+            let uploadProgressValue = 0
+            let uploadProgressTarget = 0
+            let uploadProgressTimer = null
+            let initHideTimer = null
 
             const primaryFaceMesh = {
                 graphId: '53886995-3b91-4a4d-8383-53793d5c31dd',
@@ -293,26 +361,30 @@
                 capturedBlob = null
                 capturedFileName = ''
                 hasCapturedImage = false
-                captureBtn.textContent = 'Capture'
+                hasUploadedCurrentCapture = false
+                controls.classList.add('captureOnly')
+                captureBtn.lastElementChild.textContent = 'Capture'
                 captureBtn.classList.remove('retake')
+                faceControls.classList.remove('hidden')
             }
 
             const setCapturedState = () => {
                 hasCapturedImage = true
-                captureBtn.textContent = 'Retake'
+                controls.classList.remove('captureOnly')
+                captureBtn.lastElementChild.textContent = 'Retake'
                 captureBtn.classList.add('retake')
+            }
+
+            const updateFaceSelection = (targetIndex) => {
+                faceOptions.forEach((option, index) => {
+                    option.classList.toggle('active', index === targetIndex)
+                })
             }
 
             const showStatus = (message, isSuccess = false, autoHideMs = 0) => {
                 window.clearTimeout(statusTimer)
                 statusText.textContent = message
                 statusToast.classList.add('visible')
-
-                if (isSuccess) {
-                    statusToast.classList.add('success')
-                } else {
-                    statusToast.classList.remove('success')
-                }
 
                 if (autoHideMs > 0) {
                     statusTimer = window.setTimeout(() => {
@@ -323,8 +395,36 @@
 
             const hideStatus = () => {
                 window.clearTimeout(statusTimer)
-                statusToast.classList.remove('visible', 'success')
+                statusToast.classList.remove('visible')
                 statusText.textContent = ''
+            }
+
+            const stopUploadProgressAnimation = () => {
+                if (uploadProgressTimer) {
+                    window.clearInterval(uploadProgressTimer)
+                    uploadProgressTimer = null
+                }
+            }
+
+            const startUploadProgressAnimation = () => {
+                stopUploadProgressAnimation()
+                uploadProgressTimer = window.setInterval(() => {
+                    if (uploadProgressValue >= uploadProgressTarget) {
+                        if (uploadProgressValue >= 100) {
+                            stopUploadProgressAnimation()
+                        }
+                        return
+                    }
+
+                    const remaining = uploadProgressTarget - uploadProgressValue
+                    const step = remaining > 20 ? 4 : remaining > 10 ? 2 : 1
+                    uploadProgressValue = Math.min(uploadProgressValue + step, uploadProgressTarget)
+                    showStatus(`Uploading ${uploadProgressValue}%`)
+
+                    if (uploadProgressValue >= 100) {
+                        stopUploadProgressAnimation()
+                    }
+                }, 60)
             }
 
             const triggerFlash = async () => {
@@ -495,22 +595,67 @@
                 }
             }
 
-            const applyActiveFace = (targetIndex) => {
+            const hideSceneText = () => {
+                const ecsRuntime = window.ecs
+                const world = ecsRuntime?.application?.getWorld?.()
+                if (!world) {
+                    return false
+                }
+
+                let textEid = null
+
+                if (world.three?.entityToObject) {
+                    for (const [eid, object3d] of world.three.entityToObject.entries()) {
+                        if (object3d?.name === 'Text') {
+                            textEid = eid
+                            break
+                        }
+                    }
+                }
+
+                if (textEid === null) {
+                    return false
+                }
+
+                if (ecsRuntime.Hidden) {
+                    ecsRuntime.Hidden.set(world, textEid)
+                }
+                if (ecsRuntime.Disabled) {
+                    ecsRuntime.Disabled.set(world, textEid)
+                }
+
+                const textObject = world.three?.entityToObject?.get(textEid)
+                if (textObject) {
+                    textObject.traverse((child) => {
+                        child.visible = false
+                    })
+                    if (typeof world.three?.notifyChanged === 'function') {
+                        world.three.notifyChanged(textObject)
+                    }
+                }
+
+                return true
+            }
+
+            const applyActiveFace = (targetIndex, options = {}) => {
+                const { silent = false } = options
                 const ecsRuntime = window.ecs
                 const world = ecsRuntime?.application?.getWorld?.()
                 const faceMeshEid = getFaceMeshEid(primaryFaceMesh)
 
                 if (!world || faceMeshEid === null || !ecsRuntime?.Material) {
-                    showStatus('Scene is still loading.')
+                    if (!silent) {
+                        showStatus('Scene is still loading.')
+                    }
                     return false
                 }
 
-                const nextFace = faceMeshes[targetIndex]
+                const nextFace = targetIndex >= 0 ? faceMeshes[targetIndex] : null
                 const faceMeshObject = world.three?.entityToObject?.get(faceMeshEid)
 
                 if (faceMeshObject) {
                     faceMeshObject.traverse((child) => {
-                        child.visible = true
+                        child.visible = targetIndex >= 0
                     })
                     if (typeof world.three?.notifyChanged === 'function') {
                         world.three.notifyChanged(faceMeshObject)
@@ -518,27 +663,46 @@
                 }
 
                 if (ecsRuntime.Disabled) {
-                    ecsRuntime.Disabled.remove(world, faceMeshEid)
+                    if (targetIndex >= 0) {
+                        ecsRuntime.Disabled.remove(world, faceMeshEid)
+                    } else {
+                        ecsRuntime.Disabled.set(world, faceMeshEid)
+                    }
                 }
 
                 if (ecsRuntime.Hidden) {
-                    ecsRuntime.Hidden.remove(world, faceMeshEid)
+                    if (targetIndex >= 0) {
+                        ecsRuntime.Hidden.remove(world, faceMeshEid)
+                    } else {
+                        ecsRuntime.Hidden.set(world, faceMeshEid)
+                    }
                 }
 
-                ecsRuntime.Material.mutate(world, faceMeshEid, (material) => {
-                    material.textureSrc = nextFace.textureSrc
-                    return false
-                })
+                if (nextFace) {
+                    ecsRuntime.Material.mutate(world, faceMeshEid, (material) => {
+                        material.textureSrc = nextFace.textureSrc
+                        return false
+                    })
+                }
 
                 activeFaceIndex = targetIndex
-                faceBtn.textContent = nextFace.label
-                showStatus(`${nextFace.label} active.`, true, 1500)
+                updateFaceSelection(targetIndex)
                 return true
+            }
+
+            const initializeHiddenFaces = () => {
+                if (applyActiveFace(-1, { silent: true })) {
+                    if (initHideTimer) {
+                        window.clearInterval(initHideTimer)
+                        initHideTimer = null
+                    }
+                }
             }
 
             captureBtn.addEventListener('click', async () => {
                 if (hasCapturedImage) {
                     resetCaptureState()
+                    hideSceneText()
                     hideStatus()
                     return
                 }
@@ -556,6 +720,7 @@
 
                     capturedBlob = base64ToBlob(imageData, 'image/jpeg')
                     capturedFileName = `capture_${Date.now()}.jpg`
+                    hasUploadedCurrentCapture = false
 
                     if (previewUrl) {
                         URL.revokeObjectURL(previewUrl)
@@ -565,6 +730,7 @@
                     capturePreview.src = previewUrl
 
                     showOverlay()
+                    faceControls.classList.add('hidden')
                     setCapturedState()
                     hideStatus()
                 } catch (err) {
@@ -583,12 +749,20 @@
                     return
                 }
 
+                if (hasUploadedCurrentCapture) {
+                    showStatus('Capture a new photo before uploading again.')
+                    return
+                }
+
                 try {
                     captureBtn.disabled = true
                     uploadBtn.disabled = true
                     shareBtn.disabled = true
 
-                    showStatus('Uploading... 0%')
+                    uploadProgressValue = 0
+                    uploadProgressTarget = 0
+                    showStatus('Uploading 0%')
+                    startUploadProgressAnimation()
 
                     const uniqueName = capturedFileName || `capture_${Date.now()}.jpg`
                     const storageRef = ref(storage, `uploads/${uniqueName}`)
@@ -601,8 +775,7 @@
                         uploadTask.on(
                             'state_changed',
                             (snapshot) => {
-                                const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
-                                showStatus(`Uploading... ${progress}%`)
+                                uploadProgressTarget = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
                             },
                             (error) => {
                                 reject(error)
@@ -613,13 +786,21 @@
                         )
                     })
 
+                    uploadProgressTarget = 100
+                    while (uploadProgressValue < 100) {
+                        await new Promise((resolve) => window.setTimeout(resolve, 40))
+                    }
+                    stopUploadProgressAnimation()
+
                     const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
                     console.log('Upload success:', downloadURL)
+                    hasUploadedCurrentCapture = true
 
                     showStatus('Upload Completed', true, 2000)
                 } catch (err) {
+                    stopUploadProgressAnimation()
                     console.error(err)
-                    showStatus('Upload failed ❌')
+                    showStatus('Upload failed')
                 } finally {
                     captureBtn.disabled = false
                     uploadBtn.disabled = false
@@ -660,12 +841,20 @@
                 }
             })
 
-            faceBtn.addEventListener('click', () => {
-                const nextIndex = (activeFaceIndex + 1) % faceMeshes.length
-                applyActiveFace(nextIndex)
+            faceOptions.forEach((option, index) => {
+                option.addEventListener('click', () => {
+                    hideStatus()
+                    applyActiveFace(index)
+                })
             })
 
-            faceBtn.textContent = faceMeshes[activeFaceIndex].label
+            hideSceneText()
+            initializeHiddenFaces()
+            showStatus('Pick an option to try')
+            initHideTimer = window.setInterval(() => {
+                hideSceneText()
+                initializeHiddenFaces()
+            }, 300)
         })
     </script>
 
