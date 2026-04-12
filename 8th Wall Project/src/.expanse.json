@@ -155,18 +155,21 @@
         "color": "#ffffff",
         "textureSrc": {
           "type": "asset",
-          "asset": "assets/tex1.jpeg"
+          "asset": "assets/Img_1.jpeg"
         },
         "depthTest": true,
         "depthWrite": true,
         "wireframe": false,
         "forceTransparent": true,
         "wrap": "clamp",
-        "offsetX": 0.15,
-        "offsetY": -0.05,
-        "blending": "normal",
+        "offsetX": 0.075,
+        "offsetY": -0.19,
+        "blending": "multiply",
         "metalness": 0,
-        "roughness": 0.5
+        "roughness": 0.5,
+        "opacity": 0.8,
+        "repeatX": 1.25,
+        "repeatY": 1.25
       },
       "parentId": "44723f32-7598-4505-8642-64071b450690",
       "components": {
@@ -182,7 +185,7 @@
         "castShadow": true,
         "receiveShadow": true
       },
-      "hidden": false
+      "hidden": true
     },
     "02f209c5-68f9-4521-96d8-3767638da001": {
       "id": "02f209c5-68f9-4521-96d8-3767638da001",
@@ -266,19 +269,20 @@
         "color": "#ffffff",
         "textureSrc": {
           "type": "asset",
-          "asset": "assets/tex3.jpeg"
+          "asset": "assets/Img_3.jpeg"
         },
         "depthTest": true,
         "depthWrite": true,
         "wireframe": false,
         "forceTransparent": true,
         "wrap": "clamp",
-        "offsetX": -0.1,
-        "offsetY": 0.1,
+        "offsetX": -0.2,
+        "offsetY": 0,
         "blending": "multiply",
         "metalness": 0,
-        "repeatX": 1.75,
-        "repeatY": 1.75
+        "repeatX": 2,
+        "repeatY": 2,
+        "opacity": 0.8
       },
       "parentId": "44723f32-7598-4505-8642-64071b450690",
       "components": {

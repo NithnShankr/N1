@@ -248,7 +248,7 @@
 
     <div id="loadingScreen">Loading...</div>
 
-    <div id="versionTag">v1.23</div>
+    <div id="versionTag">v1.30</div>
 
     <div id="flashOverlay"></div>
 
@@ -338,15 +338,22 @@
             const faceMeshes = [
                 {
                     label: 'Face 1',
-                    textureSrc: 'assets/tex1.jpeg',
+                    textureSrc: 'assets/Img_1.jpeg',
                     graphId: '53886995-3b91-4a4d-8383-53793d5c31dd',
                     name: 'F1',
-                    offsetX: 0.15,
-                    offsetY: -0.05,
+                    offsetX: 0.075,
+                    offsetY: -0.19,
                     metalness: 0,
-                    roughness: 0.5,
-                    repeatX: 1,
-                    repeatY: 1,
+                    roughness: 0,
+                    opacity: 1,
+                    repeatX: 1.25,
+                    repeatY: 1.25,
+                    blending: 'multiply',
+                    depthTest: true,
+                    depthWrite: true,
+                    wireframe: false,
+                    forceTransparent: true,
+                    wrap: 'clamp',
                 },
                 {
                     label: 'Face 2',
@@ -357,20 +364,34 @@
                     offsetY: 0.15,
                     metalness: 0,
                     roughness: 0,
+                    opacity: 1,
                     repeatX: 1,
                     repeatY: 1,
+                    blending: 'multiply',
+                    depthTest: true,
+                    depthWrite: true,
+                    wireframe: false,
+                    forceTransparent: true,
+                    wrap: 'clamp',
                 },
                 {
                     label: 'Face 3',
-                    textureSrc: 'assets/tex3.jpeg',
+                    textureSrc: 'assets/Img_3.jpeg',
                     graphId: '73298db5-f37a-479a-b905-553c44a3ae52',
                     name: 'F3',
-                    offsetX: -0.1,
-                    offsetY: 0.1,
+                    offsetX: -0.2,
+                    offsetY: 0,
                     metalness: 0,
                     roughness: 0,
-                    repeatX: 1.75,
-                    repeatY: 1.75,
+                    opacity: 1,
+                    repeatX: 2,
+                    repeatY: 2,
+                    blending: 'multiply',
+                    depthTest: true,
+                    depthWrite: true,
+                    wireframe: false,
+                    forceTransparent: true,
+                    wrap: 'clamp',
                 },
             ]
 
@@ -638,6 +659,13 @@
                         material.repeatY = faceMesh.repeatY
                         material.metalness = faceMesh.metalness
                         material.roughness = faceMesh.roughness
+                        material.opacity = faceMesh.opacity
+                        material.blending = faceMesh.blending
+                        material.depthTest = faceMesh.depthTest
+                        material.depthWrite = faceMesh.depthWrite
+                        material.wireframe = faceMesh.wireframe
+                        material.forceTransparent = faceMesh.forceTransparent
+                        material.wrap = faceMesh.wrap
                         return false
                     })
                 }
