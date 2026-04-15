@@ -115,12 +115,14 @@
 
         #frameOverlayImg {
             position: fixed;
-            inset: 0;
+            top: 50%;
+            left: 50%;
             z-index: 9997;
-            width: 100vw;
+            width: auto;
             height: 100vh;
-            object-fit: fill;
-            transform: scale(1.03);
+            max-width: none;
+            max-height: none;
+            transform: translate(-50%, -50%) scale(1.03);
             transform-origin: center;
             pointer-events: none;
             user-select: none;
@@ -296,7 +298,7 @@
 
     <div id="loadingScreen">Loading...</div>
 
-    <div id="versionTag">v1.6</div>
+    <div id="versionTag">v1.7</div>
 
     <div id="flashOverlay"></div>
 
@@ -371,7 +373,9 @@
             const statusText = document.getElementById('statusText')
             const faceControls = document.getElementById('faceControls')
             const loadingScreen = document.getElementById('loadingScreen')
-            const frameAssetPath = 'assets/frame2.png'
+            const defaultFrameAssetPath = 'assets/frame2.png'
+            const urlParams = new URLSearchParams(window.location.search)
+            const shouldHideFrameOptions = urlParams.get('h') === '1'
 
             let capturedBlob = null
             let capturedFileName = ''
@@ -380,6 +384,7 @@
             let statusTimer = null
             let hasCapturedImage = false
             let activeFaceIndex = 0
+            let activeFrameAssetPath = defaultFrameAssetPath
             let hasUploadedCurrentCapture = false
             let uploadProgressValue = 0
             let uploadProgressTarget = 0
@@ -391,6 +396,7 @@
                 {
                     label: 'Face 1',
                     textureSrc: 'assets/Img_1.jpeg',
+                    frameSrc: 'assets/f1.png',
                     graphId: '53886995-3b91-4a4d-8383-53793d5c31dd',
                     name: 'F1',
                     offsetX: 0.075,
@@ -410,6 +416,7 @@
                 {
                     label: 'Face 2',
                     textureSrc: 'assets/tex2.jpeg',
+                    frameSrc: 'assets/f2.png',
                     graphId: '02f209c5-68f9-4521-96d8-3767638da001',
                     name: 'F2',
                     offsetX: -0.325,
@@ -429,6 +436,7 @@
                 {
                     label: 'Face 3',
                     textureSrc: 'assets/Img_3.jpeg',
+                    frameSrc: 'assets/f3.png',
                     graphId: '73298db5-f37a-479a-b905-553c44a3ae52',
                     name: 'F3',
                     offsetX: -0.2,
@@ -480,7 +488,9 @@ ${shareLink}`
                 controls.classList.add('captureOnly')
                 captureBtn.lastElementChild.textContent = 'Capture'
                 captureBtn.classList.remove('retake')
-                faceControls.classList.remove('hidden')
+                if (!shouldHideFrameOptions) {
+                    faceControls.classList.remove('hidden')
+                }
             }
 
             const setCapturedState = () => {
@@ -548,6 +558,11 @@ ${shareLink}`
                 flashOverlay.classList.remove('active')
             }
 
+            const setActiveFrame = (frameSrc) => {
+                activeFrameAssetPath = frameSrc
+                frameOverlayImg.src = frameSrc
+            }
+
             const base64ToBlob = (base64Data, contentType = 'image/jpeg') => {
                 const byteCharacters = atob(base64Data)
                 const byteArrays = []
@@ -578,7 +593,7 @@ ${shareLink}`
             const compositeFrameOnBlob = async (sourceBlob) => {
                 const [capturedImage, frameImage] = await Promise.all([
                     loadImage(URL.createObjectURL(sourceBlob)),
-                    loadImage(frameAssetPath),
+                    loadImage(activeFrameAssetPath),
                 ])
 
                 try {
@@ -593,8 +608,9 @@ ${shareLink}`
 
                     ctx.drawImage(capturedImage, 0, 0, canvas.width, canvas.height)
                     const frameScale = 1.03
-                    const frameWidth = canvas.width * frameScale
+                    const frameAspectRatio = frameImage.naturalWidth / frameImage.naturalHeight
                     const frameHeight = canvas.height * frameScale
+                    const frameWidth = frameHeight * frameAspectRatio
                     const frameX = (canvas.width - frameWidth) / 2
                     const frameY = (canvas.height - frameHeight) / 2
 
@@ -849,6 +865,9 @@ ${shareLink}`
                 })
 
                 activeFaceIndex = targetIndex
+                if (targetIndex >= 0 && faceMeshes[targetIndex]?.frameSrc) {
+                    setActiveFrame(faceMeshes[targetIndex].frameSrc)
+                }
                 updateFaceSelection(targetIndex)
                 return true
             }
@@ -1021,10 +1040,14 @@ ${shareLink}`
 
             hideSceneText()
             initializeHiddenFaces()
+            setActiveFrame(defaultFrameAssetPath)
+            if (shouldHideFrameOptions) {
+                faceControls.classList.add('hidden')
+            }
             frameOverlayImg.addEventListener('error', () => {
                 showStatus('Frame image could not be loaded.')
             }, { once: true })
-            showStatus('Pick an option to try')
+            showStatus(shouldHideFrameOptions ? 'Tap on Capture' : 'Pick an option to try')
             initHideTimer = window.setInterval(() => {
                 hideSceneText()
                 initializeHiddenFaces()
