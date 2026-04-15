@@ -296,11 +296,11 @@
 
     <div id="loadingScreen">Loading...</div>
 
-    <div id="versionTag">v1.5</div>
+    <div id="versionTag">v1.6</div>
 
     <div id="flashOverlay"></div>
 
-    <img id="frameOverlayImg" src="assets/frame1.png" alt="" aria-hidden="true" />
+    <img id="frameOverlayImg" src="assets/frame2.png" alt="" aria-hidden="true" />
 
     <div id="captureOverlay">
         <img id="capturePreview" alt="Captured preview" />
@@ -371,7 +371,7 @@
             const statusText = document.getElementById('statusText')
             const faceControls = document.getElementById('faceControls')
             const loadingScreen = document.getElementById('loadingScreen')
-            const frameAssetPath = 'assets/frame1.png'
+            const frameAssetPath = 'assets/frame2.png'
 
             let capturedBlob = null
             let capturedFileName = ''
@@ -447,9 +447,15 @@
                 },
             ]
 
-            const shareSubject = 'Placeholder Subject'
+            const shareSubject = 'The hidden cost of Haemophilia in India'
             const shareLink = 'https://nithnshankr.github.io/N1/'
-            const shareText = `Placeholder Text ${shareLink}`
+            const shareText = `The hidden cost of Haemophilia in India
+- 1 in 3 kids drop out of school, and 38% of adults are unemployed.
+- By age 25, zero patients are disability-free, condemning them to a lifetime of joint pain and immobility
+- A haemophilia patient's average age at death is just 27.7yrs
+- Majority of the deaths, 55.8%, are due to preventable causes
+
+${shareLink}`
 
             const showOverlay = () => {
                 captureOverlay.classList.add('visible')
