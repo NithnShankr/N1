@@ -4,17 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Empty Project</title>
+    <title>Novo Nordisk</title>
 
-    <meta itemprop="name" content="Empty Project">
-    <meta name="twitter:title" content="Empty Project">
-    <meta property="og:title" content="Empty Project">
-    <meta property="og:site_name" content="Empty Project">
+    <meta itemprop="name" content="Novo Nordisk">
+    <meta name="twitter:title" content="Novo Nordisk">
+    <meta property="og:title" content="Novo Nordisk">
+    <meta property="og:site_name" content="Novo Nordisk">
 
-    <meta name="description" content="Start with a blank project.">
-    <meta itemprop="description" content="Start with a blank project.">
-    <meta property="og:description" content="Start with a blank project.">
-    <meta name="twitter:description" content="Start with a blank project.">
+    <meta name="description" content="Novo Nordisk.">
+    <meta itemprop="description" content="Novo Nordisk.">
+    <meta property="og:description" content="Novo Nordisk.">
+    <meta name="twitter:description" content="Novo Nordisk.">
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
@@ -357,7 +357,7 @@
 
     <div id="loadingScreen">Loading...</div>
 
-    <div id="versionTag">v1.7</div>
+    <div id="versionTag">v2.0</div>
 
     <div id="flashOverlay"></div>
 
@@ -529,7 +529,7 @@
             ]
 
             const shareSubject = 'The hidden cost of Haemophilia in India'
-            const shareLink = 'https://nithnshankr.github.io/N1/'
+            const shareLink = `${window.location.origin}${window.location.pathname}${window.location.search}`
             const shareText = `The hidden cost of Haemophilia in India
 - 1 in 3 kids drop out of school, and 38% of adults are unemployed.
 - By age 25, zero patients are disability-free, condemning them to a lifetime of joint pain and immobility
@@ -719,7 +719,7 @@ ${shareLink}`
                             } else {
                                 reject(new Error('Could not finalize composited image'))
                             }
-                        }, 'image/png')
+                        }, 'image/jpeg', 0.9)
                     })
                 } finally {
                     if (capturedImage.src.startsWith('blob:')) {
@@ -770,11 +770,11 @@ ${shareLink}`
                         } else {
                             reject(new Error('Could not create share image'))
                         }
-                    }, 'image/png')
+                    }, 'image/jpeg', 0.9)
                 })
 
-                return new File([blob], `share_${Date.now()}.png`, {
-                    type: 'image/png',
+                return new File([blob], `share_${Date.now()}.jpg`, {
+                    type: 'image/jpeg',
                     lastModified: Date.now(),
                 })
             }
@@ -800,11 +800,11 @@ ${shareLink}`
                     showStatus('Uploading 0%')
                     startUploadProgressAnimation()
 
-                    const uniqueName = capturedFileName || `capture_${Date.now()}.png`
+                    const uniqueName = capturedFileName || `capture_${Date.now()}.jpg`
                     const storageRef = ref(storage, `uploads/${uniqueName}`)
 
                     const uploadTask = uploadBytesResumable(storageRef, capturedBlob, {
-                        contentType: capturedBlob.type || 'image/png'
+                        contentType: capturedBlob.type || 'image/jpeg'
                     })
 
                     await new Promise((resolve, reject) => {
@@ -1067,7 +1067,7 @@ ${shareLink}`
 
                     const rawCaptureBlob = base64ToBlob(imageData, 'image/jpeg')
                     capturedBlob = await compositeFrameOnBlob(rawCaptureBlob)
-                    capturedFileName = `capture_${Date.now()}.png`
+                    capturedFileName = `capture_${Date.now()}.jpg`
                     hasUploadedCurrentCapture = false
 
                     if (previewUrl) {
